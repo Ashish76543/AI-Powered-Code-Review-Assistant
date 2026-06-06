@@ -1,0 +1,1 @@
+from app.db.models.pull_request import PullRequest
