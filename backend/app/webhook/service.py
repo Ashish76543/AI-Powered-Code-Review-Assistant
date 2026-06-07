@@ -1,36 +1,22 @@
-from app.db.session import SessionLocal
-from app.db.models.pull_request import PullRequest
+from app.kafka.producer import publish_event
+
 
 def process_webhook(payload):
 
     print(payload)
 
     if "pull_request" not in payload:
-
         return {
             "message": "Not a pull request event"
         }
 
-    repo = payload["repository"]["full_name"]
+    print("Pull request event detected")
 
-    pr_number = payload["pull_request"]["number"]
+    publish_event(payload)
 
-    author = payload["pull_request"]["user"]["login"]
-
-    db = SessionLocal()
-
-    pr = PullRequest(
-        repo_name=repo,
-        pr_number=pr_number,
-        author=author
-    )
-
-    db.add(pr)
-
-    db.commit()
-
-    db.close()
+    print("publish_event completed")
+    ##send the data to kafka producer.py function
 
     return {
-        "message": "PR saved"
+        "message": "Event queued successfully"
     }
