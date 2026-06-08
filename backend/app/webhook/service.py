@@ -1,21 +1,21 @@
 from app.kafka.producer import publish_event
 
+from app.utils.logger import logger
+
 
 def process_webhook(payload):
 
-    print(payload)
-
     if "pull_request" not in payload:
+
+        logger.info("Ignored non-PR event")
+
         return {
             "message": "Not a pull request event"
         }
 
-    print("Pull request event detected")
-
     publish_event(payload)
 
-    print("publish_event completed")
-    ##send the data to kafka producer.py function
+    logger.info("Event sent to Kafka")
 
     return {
         "message": "Event queued successfully"

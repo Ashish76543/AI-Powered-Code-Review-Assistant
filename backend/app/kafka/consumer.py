@@ -1,5 +1,11 @@
 from confluent_kafka import Consumer
+
 import json
+
+from app.db.session import SessionLocal
+from app.db.models.pull_request import PullRequest
+
+from app.utils.logger import logger
 
 
 consumer = Consumer({
@@ -8,16 +14,14 @@ consumer = Consumer({
     "auto.offset.reset": "earliest"
 })
 
-##create consumer object listening to port 9092 ,multiple consumers with same group id can be created to divide tasksk amongst
-
 
 TOPIC = "github-pr-events"
 
 consumer.subscribe([TOPIC])
-##susbcribed to this topic,any data in topic will immediately be received
+
 
 def consume_events():
-    ##infinitely keep asking the kafka server (polling) ,wait maximum 1 second
+
     while True:
 
         msg = consumer.poll(1.0)
@@ -26,12 +30,55 @@ def consume_events():
             continue
 
         if msg.error():
-            print(msg.error())
+
+            logger.error(msg.error())
+
             continue
 
         payload = json.loads(
-            msg.value().decode("utf-8")  ##convert json to dictionary
+            msg.value().decode("utf-8")
         )
 
-        print("Received Event:")
-        print(payload)
+        try:
+
+            action = payload["action"]
+
+            repo = payload["repository"]["full_name"]
+
+            pr_number = payload["pull_request"]["number"]
+
+            author = payload["pull_request"]["user"]["login"]
+
+            db = SessionLocal()
+
+            existing_pr = db.query(PullRequest).filter(
+                PullRequest.repo_name == repo,
+                PullRequest.pr_number == pr_number
+            ).first()
+
+            if existing_pr:
+
+                existing_pr.status = action  ##if the pr already exisys,we update inly the status
+
+                logger.info("Updated existing PR")
+
+            else:
+
+                pr = PullRequest(
+                    repo_name=repo,
+                    pr_number=pr_number,
+                    author=author,
+                    status=action
+                )
+
+                db.add(pr)
+
+                logger.info("Created new PR")
+
+            db.commit()
+
+            db.close()
+
+        except Exception as e:
+
+            logger.error(str(e))

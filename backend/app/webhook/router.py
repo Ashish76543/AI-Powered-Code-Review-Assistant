@@ -1,13 +1,13 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter
 
+from app.webhook.schemas import GithubWebhookSchema
 from app.webhook.service import process_webhook
 
+
 router = APIRouter()
-##create a router for the webhook,webhook request got here
+
+
 @router.post("/github/webhook")
-async def github_webhook(req: Request):
-    ##to get the payload from the request
-    payload = await req.json()
-    ##to process the payload
-    ##returns the return from process_webhook in service.py for github
-    return process_webhook(payload)
+async def github_webhook(payload: GithubWebhookSchema):
+
+    return process_webhook(payload.model_dump())

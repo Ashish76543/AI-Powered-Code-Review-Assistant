@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String
 
 from app.db.base_class import Base
 
+
 class PullRequest(Base):
 
     __tablename__ = "pull_requests"
@@ -13,3 +14,5 @@ class PullRequest(Base):
     pr_number = Column(Integer)
 
     author = Column(String)
+
+    status = Column(String)
