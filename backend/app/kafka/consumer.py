@@ -7,6 +7,8 @@ from app.db.models.pull_request import PullRequest
 
 from app.utils.logger import logger
 
+from app.github.service import fetch_pr_data ##to call the github api
+
 
 consumer = Consumer({
     "bootstrap.servers": "localhost:9092",
@@ -48,6 +50,13 @@ def consume_events():
             pr_number = payload["pull_request"]["number"]
 
             author = payload["pull_request"]["user"]["login"]
+
+            pr_data = fetch_pr_data(
+                repo,
+                pr_number
+            )
+
+            logger.info(pr_data)
 
             db = SessionLocal()
 

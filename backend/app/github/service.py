@@ -1,33 +1,29 @@
-from app.db.session import SessionLocal
-##to create the session for model
-from app.db.models.pull_request import PullRequest
-## to create Pull Request object for adding to model
+from app.github.client import get_pull_request
 
-def process_webhook(payload):
 
-    repo = payload["repository"]["full_name"]
+def fetch_pr_data(repo_name: str, pr_number: int):
 
-    pr_number = payload["pull_request"]["number"]
-
-    author = payload["pull_request"]["user"]["login"]
-    ##to get data from json payload
-
-    db = SessionLocal()
-    ##to create the session for model
-    pr = PullRequest(
-        repo_name=repo,
-        pr_number=pr_number,
-        author=author
+    # Fetch pull request object
+    pr = get_pull_request(
+        repo_name,
+        pr_number
     )
-    ##to create the Pull Request object for adding to model
 
-    db.add(pr)
-     ##to add the Pull Request object to the session
-    db.commit()
-    #to commit the changes to the database
-    db.close()
-    ##to close the session
+    files = []
+
+    # Loop through changed files in the PR
+    for file in pr.get_files():
+        ##for each updated file
+        files.append({
+            "filename": file.filename,  ##the actual file path
+            "status": file.status,      ##the current file status
+            "patch": file.patch         ##the actual modified changes
+        })
+
+    # Return structured PR data
     return {
-        "message": "PR saved"
+        "title": pr.title,
+        "body": pr.body,
+        "author": pr.user.login,
+        "files": files  ## we return everything
     }
-    ##to return the message that the PR is saved
