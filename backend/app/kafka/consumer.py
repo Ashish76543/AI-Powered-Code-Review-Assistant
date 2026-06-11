@@ -1,13 +1,17 @@
 from confluent_kafka import Consumer
-
+from app.db.models.pull_request_file import PullRequestFile
 import json
+from app.services.diff_parser import extract_added_code
 
+from app.services.ast_parser import analyze_python_code
+
+from app.db.models.analysis_result import AnalysisResult
 from app.db.session import SessionLocal
 from app.db.models.pull_request import PullRequest
 
 from app.utils.logger import logger
 
-from app.github.service import fetch_pr_data ##to call the github api
+from app.github.service import fetch_pr_data
 
 
 consumer = Consumer({
@@ -67,7 +71,9 @@ def consume_events():
 
             if existing_pr:
 
-                existing_pr.status = action  ##if the pr already exisys,we update inly the status
+                existing_pr.status = action
+
+                pr_record = existing_pr
 
                 logger.info("Updated existing PR")
 
@@ -82,7 +88,62 @@ def consume_events():
 
                 db.add(pr)
 
+                db.flush()
+
+                pr_record = pr
+
                 logger.info("Created new PR")
+
+            # Remove old file records for this PR
+            db.query(PullRequestFile).filter(
+                PullRequestFile.pull_request_id == pr_record.id
+            ).delete()
+            db.query(AnalysisResult).filter(
+                AnalysisResult.pull_request_id == pr_record.id
+            ).delete()
+
+            # Save current files from GitHub PR
+            for file in pr_data["files"]:
+
+                db_file = PullRequestFile(
+                    pull_request_id=pr_record.id,
+                    filename=file["filename"],
+                    status=file["status"],
+                    patch=file["patch"]
+                )
+
+                db.add(db_file)
+                code = extract_added_code(
+                    file.get("patch")
+                )
+                ## we call the patch to get the result
+
+                if code.strip(): ## remove white space and check if empty
+
+                    analysis = analyze_python_code(
+                        code
+                    )   ##if empty send for analysis
+
+                    if analysis:
+                            ##if analysis result got  add to the AnalysisResult model
+                        result = AnalysisResult(
+                            pull_request_id=pr_record.id,
+                            filename=file["filename"],
+                            functions=",".join(
+                                analysis["functions"]
+                            ), ##join based on commas into a string 
+                            classes=",".join(
+                                analysis["classes"]
+                            ),
+                            imports=",".join(
+                                analysis["imports"]
+                            ),
+                            loops=analysis["loops"]
+                        )
+
+                        db.add(result)
+
+                        logger.info(analysis)
 
             db.commit()
 
