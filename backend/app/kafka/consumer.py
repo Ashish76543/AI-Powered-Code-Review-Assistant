@@ -12,7 +12,8 @@ from app.db.models.pull_request import PullRequest
 from app.utils.logger import logger
 
 from app.github.service import fetch_pr_data
-
+from app.services.static_analysis import run_bandit
+from app.db.models.static_issue import StaticIssue
 
 consumer = Consumer({
     "bootstrap.servers": "localhost:9092",
@@ -101,6 +102,9 @@ def consume_events():
             db.query(AnalysisResult).filter(
                 AnalysisResult.pull_request_id == pr_record.id
             ).delete()
+            db.query(StaticIssue).filter(
+                StaticIssue.pull_request_id == pr_record.id
+            ).delete()
 
             # Save current files from GitHub PR
             for file in pr_data["files"]:
@@ -144,6 +148,26 @@ def consume_events():
                         db.add(result)
 
                         logger.info(analysis)
+                        issues = run_bandit(code)
+                        logger.info(issues)
+                        for issue in issues:
+
+                            db_issue = StaticIssue(
+                                pull_request_id=pr_record.id,
+                                filename=file["filename"],
+                                tool="bandit",
+                                severity=issue.get(
+                                    "issue_severity"
+                                ),
+                                message=issue.get(
+                                    "issue_text"
+                                ),
+                                line_number=issue.get(
+                                    "line_number"
+                                )
+                            )
+
+                            db.add(db_issue)
 
             db.commit()
 
