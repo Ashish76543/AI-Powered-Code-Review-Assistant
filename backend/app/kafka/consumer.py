@@ -14,7 +14,13 @@ from app.utils.logger import logger
 from app.github.service import fetch_pr_data
 from app.services.static_analysis import run_bandit
 from app.db.models.static_issue import StaticIssue
+from app.services.embedding_service import (
+    generate_embedding
+)
 
+from app.services.faiss_service import (
+    add_code_embedding
+)
 consumer = Consumer({
     "bootstrap.servers": "localhost:9092",
     "group.id": "pr-review-group",
@@ -168,6 +174,14 @@ def consume_events():
                             )
 
                             db.add(db_issue)
+                        embedding = generate_embedding(
+                            code
+                        )
+
+                        add_code_embedding(
+                            embedding,
+                            file["filename"]
+                        )
 
             db.commit()
 
