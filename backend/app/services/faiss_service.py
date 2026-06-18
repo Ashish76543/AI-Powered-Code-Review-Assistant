@@ -72,7 +72,7 @@ def load_metadata():
 ##used to map the metadat ie file name to the vector number and save metadat and vector
 def add_code_embedding(
     vector,
-    filename
+    filename,code,pull_request_id
 ):
 
     metadata = load_metadata()
@@ -82,7 +82,7 @@ def add_code_embedding(
     add_embedding(vector)
 
     metadata[str(vector_id)] = {
-        "filename": filename
+        "filename": filename,"code":code,"pull_request_id":pull_request_id
     }
 
     save_metadata(metadata)

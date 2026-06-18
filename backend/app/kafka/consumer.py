@@ -10,7 +10,9 @@ from app.db.session import SessionLocal
 from app.db.models.pull_request import PullRequest
 
 from app.utils.logger import logger
-
+from app.services.retrieval_service import (
+    retrieve_similar_code
+)
 from app.github.service import fetch_pr_data
 from app.services.static_analysis import run_bandit
 from app.db.models.static_issue import StaticIssue
@@ -177,11 +179,13 @@ def consume_events():
                         embedding = generate_embedding(
                             code
                         )
-
+                        similar_files=retrieve_similar_code(embedding)
                         add_code_embedding(
                             embedding,
-                            file["filename"]
+                            file["filename"],code,pr_record.id
                         )
+                        
+                        logger.info(f"Similar files:{similar_files}")
 
             db.commit()
 
