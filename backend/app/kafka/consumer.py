@@ -16,6 +16,7 @@ from app.services.retrieval_service import (
 from app.github.service import fetch_pr_data
 from app.services.static_analysis import run_bandit
 from app.db.models.static_issue import StaticIssue
+from app.Orchastrator.graph import graph
 from app.services.embedding_service import (
     generate_embedding
 )
@@ -186,6 +187,39 @@ def consume_events():
                         )
                         
                         logger.info(f"Similar files:{similar_files}")
+                        state = {
+
+                            "repo": repo,
+
+                            "pr_number": pr_number,
+
+                            "author": author,
+
+                            "title": pr_data["title"],
+
+                            "body": pr_data["body"],
+
+                            "files": [
+
+                                {
+
+                                    "filename": file["filename"],
+
+                                    "code": code,
+
+                                    "analysis": analysis,
+
+                                    "issues": issues,
+
+                                    "similar_files": similar_files
+
+                                }
+
+                            ]
+
+                        }
+
+                        graph.invoke(state)
 
             db.commit()
 
