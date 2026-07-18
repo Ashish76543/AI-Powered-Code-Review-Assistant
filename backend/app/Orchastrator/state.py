@@ -5,6 +5,10 @@ class FileState(TypedDict):
 
     filename: str
 
+    status: str
+
+    patch: str
+
     code: str
 
     analysis: dict
@@ -27,3 +31,9 @@ class ReviewState(TypedDict):
     body: str
 
     files: list[FileState]
+
+    code_review: str
+
+    security_review: str
+
+    performance_review: str

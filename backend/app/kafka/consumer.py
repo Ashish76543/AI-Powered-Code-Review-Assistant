@@ -189,35 +189,45 @@ def consume_events():
                         logger.info(f"Similar files:{similar_files}")
                         state = {
 
-                            "repo": repo,
+                        "repo": repo,
 
-                            "pr_number": pr_number,
+                        "pr_number": pr_number,
 
-                            "author": author,
+                        "author": author,
 
-                            "title": pr_data["title"],
+                        "title": pr_data["title"],
 
-                            "body": pr_data["body"],
+                        "body": pr_data["body"],
 
-                            "files": [
+                        "files": [
 
-                                {
+                            {
 
-                                    "filename": file["filename"],
+                                "filename": file["filename"],
 
-                                    "code": code,
+                                "status": file["status"],
 
-                                    "analysis": analysis,
+                                "patch": file["patch"],
 
-                                    "issues": issues,
+                                "code": code,
 
-                                    "similar_files": similar_files
+                                "analysis": analysis,
 
-                                }
+                                "issues": issues,
 
-                            ]
+                                "similar_files": similar_files
 
-                        }
+                            }
+
+                        ],
+
+                        "code_review": "",
+
+                        "security_review": "",
+
+                        "performance_review": ""
+
+                    }
 
                         graph.invoke(state)
 

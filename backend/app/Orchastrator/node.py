@@ -5,14 +5,13 @@ def validate_input(state):
 
     logger.info("========== LANGGRAPH START ==========")
 
-    logger.info("Repository : %s", state["repo"])
+    logger.info(state["repo"])
 
-    logger.info("PR Number : %s", state["pr_number"])
+    logger.info(state["pr_number"])
 
-    logger.info("Files : %d", len(state["files"]))
+    logger.info(len(state["files"]))
 
     return state
-
 
 
 def build_context(state):
@@ -25,6 +24,10 @@ def build_context(state):
 
         logger.info(file["filename"])
 
+        logger.info(file["status"])
+
+        logger.info(file["patch"])
+
         logger.info(file["code"])
 
         logger.info(file["analysis"])
@@ -36,10 +39,43 @@ def build_context(state):
     return state
 
 
+def code_review_agent(state):
+
+    logger.info("Running Code Review Agent")
+
+    state["code_review"] = "Code Review Finished"
+
+    return state
+
+
+def security_review_agent(state):
+
+    logger.info("Running Security Agent")
+
+    state["security_review"] = "Security Review Finished"
+
+    return state
+
+
+def performance_review_agent(state):
+
+    logger.info("Running Performance Agent")
+
+    state["performance_review"] = "Performance Review Finished"
+
+    return state
+
+
 def finish(state):
 
-    logger.info("Context Ready")
+    logger.info("========== FINAL RESULT ==========")
 
-    logger.info("========== LANGGRAPH END ==========")
+    logger.info(state["code_review"])
+
+    logger.info(state["security_review"])
+
+    logger.info(state["performance_review"])
+
+    logger.info("========== GRAPH END ==========")
 
     return state
