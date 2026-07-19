@@ -1,5 +1,13 @@
 from app.utils.logger import logger
 
+from app.Orchastrator.llm import get_llm
+from app.Orchastrator.prompts import (
+    CODE_REVIEW_PROMPT,
+    SECURITY_PROMPT,
+    PERFORMANCE_PROMPT,
+)
+
+llm = get_llm()
 
 def validate_input(state):
 
@@ -11,7 +19,7 @@ def validate_input(state):
 
     logger.info(len(state["files"]))
 
-    return state
+    return {}
 
 
 def build_context(state):
@@ -36,46 +44,130 @@ def build_context(state):
 
         logger.info(file["similar_files"])
 
-    return state
+    return {}
 
 
 def code_review_agent(state):
 
+    reviews = []
+
     logger.info("Running Code Review Agent")
 
-    state["code_review"] = "Code Review Finished"
+    for file in state["files"]:
 
-    return state
+        prompt = CODE_REVIEW_PROMPT.format(
+            code=file["code"]
+        )
+
+        response = llm.invoke(prompt)
+
+        reviews.append(
+            f"""
+        File: {file["filename"]}
+
+        {response.content}
+        """
+                )
+
+    return {
+        "code_review": "\n".join(reviews)
+    }
+
+
+
+
 
 
 def security_review_agent(state):
 
-    logger.info("Running Security Agent")
+    reviews = []
 
-    state["security_review"] = "Security Review Finished"
+    logger.info("Running Security Review Agent")
 
-    return state
+    for file in state["files"]:
+
+        prompt = SECURITY_PROMPT.format(
+            code=file["code"],
+            issues=file["issues"],
+            similar=file["similar_files"],
+        )
+
+        response = llm.invoke(prompt)
+
+        reviews.append(
+            f"""
+File: {file["filename"]}
+
+{response.content}
+"""
+        )
+
+    return {
+        "security_review": reviews
+    }
+
+
+
 
 
 def performance_review_agent(state):
 
-    logger.info("Running Performance Agent")
+    reviews = []
 
-    state["performance_review"] = "Performance Review Finished"
+    logger.info("Running Performance Review Agent")
 
-    return state
+    for file in state["files"]:
+
+        prompt = PERFORMANCE_PROMPT.format(
+            code=file["code"]
+        )
+
+        response = llm.invoke(prompt)
+
+        reviews.append(
+            f"""
+File: {file["filename"]}
+
+{response.content}
+"""
+        )
+
+    return {
+        "performance_review": reviews
+    }
+
+
+
+
+
+
+def aggregate_reviews(state):
+
+    review = f"""
+================ CODE REVIEW ================
+
+{state['code_review']}
+
+================ SECURITY REVIEW ================
+
+{state['security_review']}
+
+================ PERFORMANCE REVIEW ================
+
+{state['performance_review']}
+"""
+
+    return {
+        "final_review": review
+    }
+
+
+
+
 
 
 def finish(state):
 
-    logger.info("========== FINAL RESULT ==========")
+    logger.info(state["final_review"])
 
-    logger.info(state["code_review"])
-
-    logger.info(state["security_review"])
-
-    logger.info(state["performance_review"])
-
-    logger.info("========== GRAPH END ==========")
-
-    return state
+    return {}
