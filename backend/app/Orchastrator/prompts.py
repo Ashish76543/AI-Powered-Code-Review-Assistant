@@ -65,3 +65,29 @@ Focus on:
 """
 
 
+RISK_PROMPT = """
+You are a Senior Engineering Manager.
+
+Below are three reviews.
+
+Code Review:
+
+{code}
+
+Security Review:
+
+{security}
+
+Performance Review:
+
+{performance}
+
+Determine the overall risk of merging this Pull Request.
+
+Return ONLY one of:
+
+LOW
+MEDIUM
+HIGH
+CRITICAL
+"""

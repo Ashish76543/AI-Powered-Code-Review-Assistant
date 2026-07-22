@@ -14,7 +14,9 @@ builder.add_node("performance", performance_review_agent)
 
 builder.add_node("aggregate", aggregate_reviews)
 builder.add_node("finish", finish)
-
+builder.add_node("risk", risk_assessment_agent)
+builder.add_node("deep_security", deep_security_agent)
+builder.add_node("formatter", review_formatter)
 builder.set_entry_point("validate")
 
 builder.add_edge("validate", "context")
@@ -28,7 +30,21 @@ builder.add_edge(
     "aggregate"
 )
 
-builder.add_edge("aggregate", "finish")
+
+
+builder.add_edge("aggregate", "risk")
+
+builder.add_conditional_edges(
+    "risk",
+    decide_next,
+    {
+        "deep_security": "deep_security",
+        "formatter": "formatter",
+    },
+)
+
+builder.add_edge("deep_security", "formatter")
+builder.add_edge("formatter", "finish")
 
 builder.set_finish_point("finish")
 

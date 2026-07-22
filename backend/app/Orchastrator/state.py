@@ -11,6 +11,8 @@ class FileState(TypedDict):
     similar_files: list
 
 
+
+
 class ReviewState(TypedDict):
     repo: str
     pr_number: int
@@ -25,3 +27,5 @@ class ReviewState(TypedDict):
     performance_review: str
 
     final_review: str
+
+    risk: str
